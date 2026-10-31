@@ -1,0 +1,1 @@
+/home/aa/wasm-racer/target/wasm32-unknown-unknown/release/wasm_racer.wasm: /home/aa/wasm-racer/src/ai_driver.rs /home/aa/wasm-racer/src/car_physics.rs /home/aa/wasm-racer/src/lib.rs /home/aa/wasm-racer/src/track_math.rs

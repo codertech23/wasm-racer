@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Velocity 3D | Professional Arcade Racing (PC & Mobile)</title>
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/speedometer.css" />
+</head>
+<body>
+
+  <!-- WebGL Render Canvas -->
+  <canvas id="render-canvas"></canvas>
+
+  <!-- In-Game HUD -->
+  <div id="game-hud">
+    <!-- Top Bar -->
+    <div class="hud-top-bar">
+      <div class="hud-pill">
+        <span class="hud-label">POSITION</span>
+        <span class="hud-value gold" id="pos-value">1ST</span>
+      </div>
+
+      <div class="hud-pill">
+        <span class="hud-label">LAP</span>
+        <span class="hud-value" id="lap-value">1 / 3</span>
+      </div>
+
+      <div class="hud-pill hud-times">
+        <div>
+          <span class="hud-label">TIME</span>
+          <div class="hud-value" id="cur-time">00:00.00</div>
+        </div>
+        <div>
+          <span class="hud-label">BEST</span>
+          <div class="hud-value" id="best-time">--:--.--</div>
+        </div>
+      </div>
+
+      <div class="hud-buttons">
+        <button class="hud-btn" id="btn-cam-hud" title="Cycle Camera (C)">🎥 CAM</button>
+        <button class="hud-btn" id="btn-reset-hud" title="Reset Car (R)">🔄 RESET</button>
+        <button class="hud-btn" id="btn-pause-hud" title="Pause (ESC)">⏸️ PAUSE</button>
+      </div>
+    </div>
+
+    <!-- Wrong Way Warning -->
+    <div id="wrong-way-alert">⚠️ WRONG WAY!</div>
+
+    <!-- Drift Score Popup -->
+    <div id="drift-alert">
+      <div class="drift-title">DRIFT!</div>
+      <div id="drift-score">+450</div>
+    </div>
+
+    <!-- 3, 2, 1, GO! Countdown Overlay -->
+    <div id="countdown-overlay">3</div>
+
+    <!-- Minimap Radar -->
+    <div id="minimap-container">
+      <canvas id="minimap-canvas" width="150" height="150"></canvas>
+    </div>
+
+    <!-- Speedometer & Tachometer Cluster -->
+    <div id="speedometer-cluster">
+      <div class="gauge-dial">
+        <div class="gauge-ticks"></div>
+        <div id="tach-needle"></div>
+        <div class="needle-hub"></div>
+
+        <div class="digital-speed">
+          <span id="speed-value">0</span>
+          <span class="speed-unit">KM / H</span>
+        </div>
+
+        <div class="gear-badge">
+          <span class="gear-label">GEAR</span>
+          <span id="gear-value">1</span>
+        </div>
+
+        <div class="rpm-bar-container">
+          <div id="rpm-fill"></div>
+        </div>
+      </div>
+
+      <!-- Nitro (N2O) Boost Bar -->
+      <div id="nitro-gauge">
+        <span class="nitro-label">N2O</span>
+        <div id="nitro-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Touch Controls -->
+  <div id="mobile-controls">
+    <div class="touch-cluster-left">
+      <button class="touch-btn large" id="btn-steer-left" aria-label="Steer Left">◀</button>
+      <button class="touch-btn large" id="btn-steer-right" aria-label="Steer Right">▶</button>
+    </div>
+
+    <div class="touch-cluster-right">
+      <div class="touch-pedals-row">
+        <button class="touch-btn btn-nitro-touch" id="btn-nitro">NITRO</button>
+        <button class="touch-btn btn-handbrake-touch" id="btn-handbrake">DRIFT</button>
+      </div>
+      <div class="touch-pedals-row">
+        <button class="touch-btn rect pedal-brake" id="btn-brake">BRAKE<br/>REV</button>
+        <button class="touch-btn rect pedal-gas" id="btn-gas">GAS<br/>ACCEL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Menu Overlay -->
+  <div class="modal-overlay" id="main-menu">
+    <div class="menu-card">
+      <div class="menu-header">
+        <h1 class="game-title">VELOCITY 3D</h1>
+        <p class="game-subtitle">PROFESSIONAL ARCADE RACING &bull; WASM ACCELERATED</p>
+      </div>
+
+      <!-- Game Mode Selection -->
+      <div class="panel-title">SELECT GAME MODE</div>
+      <div class="modes-row">
+        <button class="mode-tab active" data-mode="quick_race">QUICK RACE</button>
+        <button class="mode-tab" data-mode="championship">CHAMPIONSHIP</button>
+        <button class="mode-tab" data-mode="time_trial">TIME TRIAL</button>
+        <button class="mode-tab" data-mode="free_drive">FREE DRIVE</button>
+        <button class="mode-tab" data-mode="elimination">ELIMINATION</button>
+      </div>
+
+      <!-- Car & Track Selection Grid -->
+      <div class="selection-grid">
+        <!-- Car Selection -->
+        <div class="select-panel">
+          <div class="panel-title">SPORTS CAR</div>
+          <div class="carousel-nav">
+            <button class="carousel-btn" id="btn-prev-car">&lt;</button>
+            <div class="carousel-name" id="car-display-name">Apex GT</div>
+            <button class="carousel-btn" id="btn-next-car">&gt;</button>
+          </div>
+          <p class="carousel-desc" id="car-display-desc">Mid-engine Italian exotic. Unrivaled cornering precision and aerodynamic balance.</p>
+
+          <!-- Stats -->
+          <div class="stat-row">
+            <span>TOP SPEED</span>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" id="stat-speed" style="width: 85%;"></div></div>
+          </div>
+          <div class="stat-row">
+            <span>ACCELERATION</span>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" id="stat-accel" style="width: 80%;"></div></div>
+          </div>
+          <div class="stat-row">
+            <span>HANDLING</span>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" id="stat-handling" style="width: 78%;"></div></div>
+          </div>
+          <div class="stat-row">
+            <span>DRIFT RATING</span>
+            <div class="stat-bar-bg"><div class="stat-bar-fill" id="stat-drift" style="width: 70%;"></div></div>
+          </div>
+        </div>
+
+        <!-- Track Selection -->
+        <div class="select-panel">
+          <div class="panel-title">RACING CIRCUIT</div>
+          <div class="carousel-nav">
+            <button class="carousel-btn" id="btn-prev-track">&lt;</button>
+            <div class="carousel-name" id="track-display-name">Neo Tokyo Speedway</div>
+            <button class="carousel-btn" id="btn-next-track">&gt;</button>
+          </div>
+          <p class="carousel-desc" id="track-display-desc">High-speed urban circuit through towering neon skyscrapers with wet asphalt reflections.</p>
+
+          <div class="stat-row" style="margin-top: 14px;">
+            <span>LAPS:</span>
+            <select id="select-laps" style="background:#111; color:#fff; border:1px solid #00f0ff; padding:4px 8px; border-radius:6px;">
+              <option value="2">2 Laps</option>
+              <option value="3" selected>3 Laps</option>
+              <option value="5">5 Laps</option>
+            </select>
+          </div>
+          <div class="stat-row">
+            <span>OPPONENTS:</span>
+            <select id="select-opponents" style="background:#111; color:#fff; border:1px solid #00f0ff; padding:4px 8px; border-radius:6px;">
+              <option value="2">2 Opponents</option>
+              <option value="4" selected>4 Opponents</option>
+              <option value="6">6 Opponents</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions-row">
+        <button class="btn-secondary" id="btn-open-controls">HOW TO PLAY</button>
+        <button class="btn-primary" id="btn-start-race">START RACE</button>
+        <button class="btn-secondary" id="btn-open-settings">SETTINGS</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pause Menu -->
+  <div class="modal-overlay" id="pause-menu" style="display: none;">
+    <div class="menu-card" style="max-width: 420px; text-align: center;">
+      <h2 style="font-size: 28px; letter-spacing: 2px; color: var(--primary-cyan);">PAUSED</h2>
+      <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+        <button class="btn-primary" id="btn-resume-race">RESUME</button>
+        <button class="btn-secondary" id="btn-restart-race">RESTART</button>
+        <button class="btn-secondary" id="btn-pause-settings">SETTINGS</button>
+        <button class="btn-secondary" id="btn-exit-to-menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Results Modal -->
+  <div class="modal-overlay" id="results-modal" style="display: none;">
+    <div class="menu-card results-card">
+      <h2 id="res-title" style="font-size: 32px; letter-spacing: 2px;">RACE FINISHED</h2>
+      <div class="results-badge" id="res-pos">1ST</div>
+
+      <div class="results-stats-list">
+        <div class="res-stat-row">
+          <span>TOTAL TIME</span>
+          <span class="res-val" id="res-total-time">02:14.30</span>
+        </div>
+        <div class="res-stat-row">
+          <span>BEST LAP</span>
+          <span class="res-val" id="res-best-lap">00:43.15</span>
+        </div>
+        <div class="res-stat-row">
+          <span>DRIFT SCORE</span>
+          <span class="res-val" id="res-drift-score">1840</span>
+        </div>
+        <div class="res-stat-row">
+          <span>CHAMPIONSHIP</span>
+          <span class="res-val" id="res-points">+25 PTS</span>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn-primary" id="btn-results-continue">CONTINUE</button>
+        <button class="btn-secondary" id="btn-results-menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal" style="display: none;">
+    <div class="menu-card" style="max-width: 500px;">
+      <h2 style="font-size: 24px; color: var(--primary-cyan);">SETTINGS</h2>
+
+      <div class="stat-row">
+        <span>GRAPHICS QUALITY:</span>
+        <select id="setting-graphics" style="background:#111; color:#fff; border:1px solid #00f0ff; padding:6px 12px; border-radius:6px;">
+          <option value="low">Low (Max FPS)</option>
+          <option value="medium">Medium</option>
+          <option value="high" selected>High (Soft Shadows)</option>
+          <option value="ultra">Ultra (Bloom & FX)</option>
+        </select>
+      </div>
+
+      <div class="stat-row">
+        <span>SFX VOLUME:</span>
+        <input type="range" id="setting-sfx" min="0" max="1" step="0.05" value="0.8" style="width: 50%;" />
+      </div>
+
+      <div class="stat-row">
+        <span>MUSIC VOLUME:</span>
+        <input type="range" id="setting-music" min="0" max="1" step="0.05" value="0.5" style="width: 50%;" />
+      </div>
+
+      <div class="stat-row">
+        <span>MOBILE TILT STEERING:</span>
+        <input type="checkbox" id="setting-tilt" style="width: 20px; height: 20px;" />
+      </div>
+
+      <div class="actions-row" style="margin-top: 10px;">
+        <button class="btn-secondary" id="btn-calibrate-tilt">CALIBRATE TILT</button>
+        <button class="btn-primary" id="btn-close-settings">DONE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- How To Play Modal -->
+  <div class="modal-overlay" id="controls-modal" style="display: none;">
+    <div class="menu-card" style="max-width: 600px;">
+      <h2 style="font-size: 26px; color: var(--primary-cyan);">HOW TO PLAY</h2>
+
+      <div class="results-stats-list" style="text-align: left;">
+        <h3 style="color: var(--accent-orange); margin-bottom: 6px;">PC KEYBOARD CONTROLS</h3>
+        <p><strong>W / Up Arrow:</strong> Accelerate / Drive Forward</p>
+        <p><strong>S / Down Arrow:</strong> Brake / Reverse</p>
+        <p><strong>A / D / Left & Right Arrows:</strong> Steer</p>
+        <p><strong>Spacebar:</strong> Handbrake (Hold to initiate drift!)</p>
+        <p><strong>Left / Right Shift:</strong> Nitro Boost (N2O)</p>
+        <p><strong>C:</strong> Change Camera View (Close, Far, Hood, Cockpit)</p>
+        <p><strong>R:</strong> Reset / Respawn Car</p>
+        <p><strong>M:</strong> Toggle Audio Mute</p>
+        <p><strong>Escape:</strong> Pause Game</p>
+
+        <h3 style="color: var(--accent-orange); margin-top: 14px; margin-bottom: 6px;">MOBILE TOUCH CONTROLS</h3>
+        <p><strong>Left / Right buttons:</strong> Steer left and right</p>
+        <p><strong>GAS pedal:</strong> Accelerate</p>
+        <p><strong>BRAKE pedal:</strong> Brake & Reverse</p>
+        <p><strong>DRIFT button:</strong> Break traction for smooth drifting</p>
+        <p><strong>NITRO button:</strong> Rocket boost speed</p>
+
+        <h3 style="color: var(--accent-orange); margin-top: 14px; margin-bottom: 6px;">PRO RACING TIPS</h3>
+        <p>&bull; Tap Handbrake when entering sharp corners to initiate a drift.</p>
+        <p>&bull; Drifting charges your Nitro tank faster!</p>
+        <p>&bull; Fire Nitro on long straightaways to blast past opponents.</p>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn-primary" id="btn-close-controls">GOT IT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Local Offline Three.js Script -->
+  <script src="js/libs/three.min.js"></script>
+
+  <!-- Base64 WASM Binary Fallback -->
+  <script src="js/wasm_binary.js"></script>
+
+  <!-- Application Main Entry Point -->
+  <script type="module" src="js/main.js"></script>
+
+</body>
+</html>
